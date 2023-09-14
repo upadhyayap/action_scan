@@ -1,0 +1,35 @@
+name: Go
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        type: string
+      runner:
+        type: string
+  push:
+    branches: [main, "patch/**"]
+  pull_request:
+    branches: [main, "patch/**"]
+
+env:
+  GO_REPOSITORY_USE_HOST_CACHE: 1
+  GIT_REF: ${{ github.ref }}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  bazel:
+    permissions:
+      contents: read # for dorny/paths-filter to fetch a list of changed files
+      pull-requests: read # for dorny/paths-filter to read pull requests
+    name: check-bazel
+    runs-on: ${{ inputs.runner || fromJSON('["self-hosted", "endorci-runner"]') }}
+    steps:
+      - uses: actions/checkout@v4
